@@ -1,6 +1,9 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useState, type MouseEvent } from "react";
+import { useRouter } from "next/navigation";
+
+import { logout } from "@/lib/auth";
 
 function PostNotification() {
   return (
@@ -42,8 +45,24 @@ function AdminNotification() {
 }
 
 export default function Header() {
+  const router = useRouter();
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout(event: MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await logout();
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      // Cookie wasn't cleared, so the user is still logged in — stay put.
+      setLoggingOut(false);
+    }
+  }
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light _header_nav _padd_t10">
@@ -220,14 +239,19 @@ export default function Header() {
                   </a>
                 </li>
                 <li className="_nav_dropdown_list_item">
-                  <a href="#0" className="_nav_dropdown_link">
+                  <a
+                    href="#0"
+                    className="_nav_dropdown_link"
+                    onClick={handleLogout}
+                    aria-busy={loggingOut}
+                  >
                     <div className="_nav_drop_info">
                       <span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 19 19">
                           <path stroke="#377DFF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6.667 18H2.889A1.889 1.889 0 011 16.111V2.89A1.889 1.889 0 012.889 1h3.778M13.277 14.222L18 9.5l-4.723-4.722M18 9.5H6.667"/>
                         </svg>
                       </span>
-                      Log Out
+                      {loggingOut ? "Logging Out…" : "Log Out"}
                     </div>
                     <button type="submit" className="_nav_drop_btn_link">
                       <svg xmlns="http://www.w3.org/2000/svg" width="6" height="10" fill="none" viewBox="0 0 6 10">

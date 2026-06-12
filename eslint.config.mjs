@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored HTML template the pages are converted from — not source code.
+    "reference/**",
   ]),
 ]);
 
