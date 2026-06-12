@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import "@/styles/bootstrap.min.css";
 import "@/styles/common.css";
@@ -121,7 +122,7 @@ export default function LoginPage() {
                     <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                       <div className="_social_login_bottom_txt">
                         <p className="_social_login_bottom_txt_para">
-                          Dont have an account? <a href="#0">Create New Account</a>
+                          Dont have an account? <Link href="/register">Create New Account</Link>
                         </p>
                       </div>
                     </div>

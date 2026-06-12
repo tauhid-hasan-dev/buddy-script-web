@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import "@/styles/bootstrap.min.css";
 import "@/styles/common.css";
@@ -138,7 +139,7 @@ export default function RegistrationPage() {
                       <div className="col-lg-12 col-md-12 col-xl-12 col-sm-12">
                         <div className="_social_registration_form_btn _mar_t40 _mar_b60">
                           <button type="button" className="_social_registration_form_btn_link _btn1">
-                            Login now
+                            Register Now
                           </button>
                         </div>
                       </div>
@@ -148,7 +149,7 @@ export default function RegistrationPage() {
                     <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                       <div className="_social_registration_bottom_txt">
                         <p className="_social_registration_bottom_txt_para">
-                          Dont have an account? <a href="#0">Create New Account</a>
+                          Already have an account? <Link href="/login">Login</Link>
                         </p>
                       </div>
                     </div>
