@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Bootstrap's .collapse class collides with Tailwind's visibility utility
+   of the same name; restore Bootstrap's behavior for the navbar. */
+.navbar-collapse.collapse {
+  visibility: visible;
+}
