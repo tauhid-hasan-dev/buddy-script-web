@@ -214,7 +214,10 @@ export default function CreatePost({
       style={{ position: "relative" }}
     >
       <VisibilityToggle value={visibility} onChange={setVisibility} />
-      <div className="_feed_inner_text_area_box">
+      {/* The visibility pill is absolutely positioned in the top-right corner,
+          so the input row is nudged down to clear it — avatar and textarea move
+          together to stay aligned, and the textarea keeps its full width. */}
+      <div className="_feed_inner_text_area_box" style={{ marginTop: 34 }}>
         <div className="_feed_inner_text_area_box_image">
           <img src="/assets/images/txt_img.png" alt={currentUser ? fullName(currentUser) : ""} className="_txt_img" />
         </div>
