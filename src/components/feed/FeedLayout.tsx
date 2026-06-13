@@ -1,9 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+// Persist the light/dark choice so it survives reloads and is shared across
+// pages (feed ↔ profile). Read in an effect (not initial state) so the server
+// and first client render agree — avoiding a hydration mismatch — then flip.
+const THEME_KEY = "buddy-theme";
 
 export default function FeedLayout({ children }: { children: React.ReactNode }) {
   const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    setDarkMode(localStorage.getItem(THEME_KEY) === "dark");
+  }, []);
+
+  function toggleTheme() {
+    setDarkMode((prev) => {
+      const next = !prev;
+      localStorage.setItem(THEME_KEY, next ? "dark" : "light");
+      return next;
+    });
+  }
 
   return (
     <div className={`_layout _layout_main_wrapper${darkMode ? " _dark_wrapper" : ""}`}>
@@ -12,7 +29,7 @@ export default function FeedLayout({ children }: { children: React.ReactNode }) 
         <button
           type="button"
           className="_layout_swithing_btn_link"
-          onClick={() => setDarkMode((prev) => !prev)}
+          onClick={toggleTheme}
         >
           <div className="_layout_swithing_btn">
             <div className="_layout_swithing_btn_round"></div>

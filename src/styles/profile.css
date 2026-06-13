@@ -1,0 +1,212 @@
+/* Profile page. Light styles use the template's CSS variables; the
+   ._dark_wrapper overrides mirror how the rest of the app themes dark mode
+   (specific surfaces switch to --bg6 / white text), since the variables in
+   :root are fixed light values. */
+
+/* The template's ._custom_container is a flexbox, so the wrap must claim full
+   width (it would otherwise shrink to its content). max-width keeps the card
+   readable; the auto margins centre it within the flex row. */
+._uprofile_wrap {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+._uprofile_card {
+  width: 100%;
+  background: var(--bg2);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(16, 32, 50, 0.08);
+  margin-bottom: 24px;
+}
+
+._uprofile_cover {
+  height: 120px;
+  background: linear-gradient(120deg, #377dff 0%, #5b8def 55%, #8f6ed5 100%);
+}
+
+/* Horizontal header row (avatar · name/email · Edit), sitting in the white
+   area below the cover — the avatar does not overlap the banner. */
+._uprofile_head {
+  padding: 22px 32px 26px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+._uprofile_avatar_wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+/* This class is passed to <Avatar>; it sizes both a real <img> and the
+   default-icon placeholder identically. Kept at the app's normal avatar size. */
+._uprofile_avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 3px solid var(--bg2);
+  background: #e4e9f1;
+  display: block;
+}
+
+._uprofile_cam_btn {
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--bg2);
+  background: #377dff;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+._uprofile_cam_btn:hover {
+  background: #2f6fe0;
+}
+._uprofile_cam_btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+._uprofile_avatar_busy {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(16, 32, 50, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+}
+
+._uprofile_identity {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+._uprofile_name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color);
+  margin: 0 0 2px;
+}
+
+._uprofile_meta {
+  color: var(--color7);
+  font-size: 14px;
+  margin: 0;
+}
+
+._uprofile_actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+._uprofile_btn {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid #d8dee8;
+  background: var(--bg2);
+  color: var(--color);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+._uprofile_btn:hover {
+  border-color: #377dff;
+  color: #377dff;
+}
+._uprofile_btn_primary {
+  background: #377dff;
+  border-color: #377dff;
+  color: #fff;
+}
+._uprofile_btn_primary:hover {
+  background: #2f6fe0;
+  color: #fff;
+}
+._uprofile_btn_danger:hover {
+  border-color: #e0414f;
+  color: #e0414f;
+}
+._uprofile_btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+._uprofile_edit {
+  padding: 0 32px 32px;
+}
+._uprofile_field {
+  margin-bottom: 16px;
+}
+._uprofile_label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color7);
+  margin-bottom: 6px;
+}
+._uprofile_input {
+  width: 100%;
+  max-width: 380px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #d8dee8;
+  background: var(--bg2);
+  color: var(--color);
+  font-size: 15px;
+  outline: none;
+}
+._uprofile_input:focus {
+  border-color: #377dff;
+}
+
+._uprofile_error {
+  color: #d0414f;
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+/* ---- Dark mode ---- */
+._dark_wrapper ._uprofile_card {
+  background: var(--bg6);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+._dark_wrapper ._uprofile_avatar,
+._dark_wrapper ._uprofile_cam_btn,
+._dark_wrapper ._uprofile_avatar {
+  border-color: var(--bg6);
+}
+._dark_wrapper ._uprofile_name {
+  color: var(--bg2);
+}
+._dark_wrapper ._uprofile_btn {
+  background: transparent;
+  border-color: #3a4a63;
+  color: var(--bg2);
+}
+._dark_wrapper ._uprofile_btn_primary {
+  background: #377dff;
+  border-color: #377dff;
+  color: #fff;
+}
+._dark_wrapper ._uprofile_input {
+  background: #1b2536;
+  border-color: #3a4a63;
+  color: var(--bg2);
+}

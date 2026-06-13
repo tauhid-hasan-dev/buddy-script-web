@@ -48,6 +48,9 @@ export interface PostAuthor {
   id: string;
   firstName: string;
   lastName: string;
+  // Public URL of the author's avatar, or null → the client shows a default
+  // icon (see the shared <Avatar> component).
+  avatarUrl: string | null;
 }
 
 // Mirrors the server's IPostDto (posts.interface.ts). BigInt ids arrive as

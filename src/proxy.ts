@@ -9,7 +9,10 @@ export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthenticated = Boolean(request.cookies.get(AUTH_COOKIE)?.value);
 
-  if (!isAuthenticated && pathname.startsWith("/feed")) {
+  if (
+    !isAuthenticated &&
+    (pathname.startsWith("/feed") || pathname.startsWith("/profile"))
+  ) {
     const loginUrl = new URL("/login", request.nextUrl);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
@@ -26,5 +29,5 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/feed/:path*", "/login", "/register"],
+  matcher: ["/", "/feed/:path*", "/profile/:path*", "/profile", "/login", "/register"],
 };

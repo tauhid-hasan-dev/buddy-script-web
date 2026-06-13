@@ -23,6 +23,7 @@ import {
   type Comment,
 } from "@/lib/comments";
 import type { AuthUser } from "@/lib/auth";
+import Avatar from "@/components/Avatar";
 import CommentNode from "./CommentNode";
 import Likers from "./Likers";
 
@@ -61,10 +62,11 @@ function NewCommentForm({
       >
         <div className="_feed_inner_comment_box_content">
           <div className="_feed_inner_comment_box_content_image">
-            <img
-              src="/assets/images/comment_img.png"
-              alt={currentUser ? fullName(currentUser) : ""}
+            <Avatar
+              src={currentUser?.avatarUrl}
+              name={currentUser ? fullName(currentUser) : ""}
               className="_comment_img"
+              size={26}
             />
           </div>
           <div className="_feed_inner_comment_box_content_txt">
@@ -302,7 +304,7 @@ export default function PostCard({
         <div className="_feed_inner_timeline_post_top">
           <div className="_feed_inner_timeline_post_box">
             <div className="_feed_inner_timeline_post_box_image">
-              <img src="/assets/images/post_img.png" alt="" className="_post_img" />
+              <Avatar src={post.author.avatarUrl} name={fullName(post.author)} className="_post_img" size={44} />
             </div>
             <div className="_feed_inner_timeline_post_box_txt">
               <h4 className="_feed_inner_timeline_post_box_title">

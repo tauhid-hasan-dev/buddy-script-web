@@ -6,6 +6,7 @@ import { ApiError } from "@/lib/api";
 import { createPost, type Post, type Visibility } from "@/lib/posts";
 import { fullName } from "@/lib/format";
 import type { AuthUser } from "@/lib/auth";
+import Avatar from "@/components/Avatar";
 
 function PhotoIcon() {
   return (
@@ -219,7 +220,12 @@ export default function CreatePost({
           together to stay aligned, and the textarea keeps its full width. */}
       <div className="_feed_inner_text_area_box" style={{ marginTop: 34 }}>
         <div className="_feed_inner_text_area_box_image">
-          <img src="/assets/images/txt_img.png" alt={currentUser ? fullName(currentUser) : ""} className="_txt_img" />
+          <Avatar
+            src={currentUser?.avatarUrl}
+            name={currentUser ? fullName(currentUser) : ""}
+            className="_txt_img"
+            size={38}
+          />
         </div>
         <div className="form-floating _feed_inner_text_area_box_form ">
           <textarea

@@ -12,6 +12,7 @@ import {
   type Comment,
 } from "@/lib/comments";
 import type { AuthUser } from "@/lib/auth";
+import Avatar from "@/components/Avatar";
 import Likers from "./Likers";
 
 function CommentReplyForm({
@@ -51,10 +52,11 @@ function CommentReplyForm({
       >
         <div className="_feed_inner_comment_box_content">
           <div className="_feed_inner_comment_box_content_image">
-            <img
-              src="/assets/images/comment_img.png"
-              alt={currentUser ? fullName(currentUser) : ""}
+            <Avatar
+              src={currentUser?.avatarUrl}
+              name={currentUser ? fullName(currentUser) : ""}
               className="_comment_img"
+              size={26}
             />
           </div>
           <div className="_feed_inner_comment_box_content_txt">
@@ -159,7 +161,7 @@ export default function CommentNode({
     <div className="_comment_main">
       <div className="_comment_image">
         <a href="#0" className="_comment_image_link">
-          <img src="/assets/images/txt_img.png" alt="" className="_comment_img1" />
+          <Avatar src={initial.author.avatarUrl} name={fullName(initial.author)} className="_comment_img1" size={40} />
         </a>
       </div>
       <div className="_comment_area">

@@ -3,8 +3,9 @@
 import { Fragment, useEffect, useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 
-import { getMe, logout } from "@/lib/auth";
+import { getMe, logout, type AuthUser } from "@/lib/auth";
 import { fullName } from "@/lib/format";
+import Avatar from "@/components/Avatar";
 
 function PostNotification() {
   return (
@@ -50,13 +51,14 @@ export default function Header() {
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [displayName, setDisplayName] = useState("");
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const displayName = user ? fullName(user) : "";
 
   useEffect(() => {
     let cancelled = false;
     getMe()
       .then((res) => {
-        if (!cancelled) setDisplayName(fullName(res.user));
+        if (!cancelled) setUser(res.user);
       })
       .catch(() => {
         // Header just falls back to no name; the API guard handles real auth.
@@ -189,7 +191,7 @@ export default function Header() {
           </ul>
           <div className="_header_nav_profile">
             <div className="_header_nav_profile_image">
-              <img src="/assets/images/profile.png" alt="Image" className="_nav_profile_img" />
+              <Avatar src={user?.avatarUrl} name={displayName} className="_nav_profile_img" size={24} />
             </div>
             <div className="_header_nav_dropdown">
               <p className="_header_nav_para">{displayName || "…"}</p>
@@ -208,7 +210,7 @@ export default function Header() {
             <div id="_prfoile_drop" className={`_nav_profile_dropdown _profile_dropdown${profileOpen ? " show" : ""}`}>
               <div className="_nav_profile_dropdown_info">
                 <div className="_nav_profile_dropdown_image">
-                  <img src="/assets/images/profile.png" alt="Image" className="_nav_drop_img" />
+                  <Avatar src={user?.avatarUrl} name={displayName} className="_nav_drop_img" size={54} />
                 </div>
                 <div className="_nav_profile_dropdown_info_txt">
                   <h4 className="_nav_dropdown_title">{displayName || "…"}</h4>
