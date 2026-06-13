@@ -1728,7 +1728,8 @@
     font-size: 12px;
     color: var(--color7)6;
 }
-._feed_inner_text_area_box_form>._textarea:focus~._feed_textarea_label {
+._feed_inner_text_area_box_form>._textarea:focus~._feed_textarea_label,
+._feed_inner_text_area_box_form>._textarea:not(:placeholder-shown)~._feed_textarea_label {
     -webkit-transition: .2s all ease;
     -o-transition: .2s all ease;
     transition: .2s all ease;
