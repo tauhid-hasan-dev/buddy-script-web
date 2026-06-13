@@ -20,12 +20,17 @@ interface ApiErrorBody {
 }
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  // Only string bodies are JSON. FormData (image uploads) must keep the
+  // browser-generated multipart Content-Type with its boundary, so we leave
+  // the header off and let fetch set it.
+  const isJsonBody = typeof init.body === "string";
+
   let response: Response;
   try {
     response = await fetch(path, {
       ...init,
       headers: {
-        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        ...(isJsonBody ? { "Content-Type": "application/json" } : {}),
         ...init.headers,
       },
       credentials: "same-origin",
