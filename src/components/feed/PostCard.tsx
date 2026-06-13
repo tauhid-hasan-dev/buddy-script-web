@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { ApiError } from "@/lib/api";
 import { fullName, formatRelativeTime } from "@/lib/format";
 import {
   deletePost,
   likePost,
   unlikePost,
+  updatePost,
   getPostLikers,
   type Post,
+  type Visibility,
 } from "@/lib/posts";
 import {
   getComments,
@@ -103,6 +106,17 @@ export default function PostCard({
 }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Content/visibility live in local state so an inline edit updates the card
+  // immediately without waiting on a feed refetch.
+  const [content, setContent] = useState(post.content);
+  const [visibility, setVisibility] = useState<Visibility>(post.visibility);
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [editVisibility, setEditVisibility] = useState<Visibility>(post.visibility);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const [likedByMe, setLikedByMe] = useState(post.likedByMe);
   const [likeCount, setLikeCount] = useState(post.likeCount);
@@ -169,6 +183,55 @@ export default function PostCard({
     }
   }
 
+  function startEdit() {
+    setEditContent(content);
+    setEditVisibility(visibility);
+    setEditError(null);
+    setEditing(true);
+    setDropdownOpen(false);
+  }
+
+  async function saveEdit() {
+    const trimmed = editContent.trim();
+    if (!trimmed) {
+      setEditError("Content can't be empty.");
+      return;
+    }
+    if (savingEdit) return;
+    setSavingEdit(true);
+    setEditError(null);
+    try {
+      const { post: updated } = await updatePost(post.id, {
+        content: trimmed,
+        visibility: editVisibility,
+      });
+      setContent(updated.content);
+      setVisibility(updated.visibility);
+      setEditing(false);
+    } catch (err) {
+      const apiError = err instanceof ApiError ? err : null;
+      setEditError(
+        apiError?.fieldErrors.content ??
+          apiError?.message ??
+          "Couldn't save your changes. Please try again."
+      );
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  // Close the dropdown when clicking outside it.
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function onClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [dropdownOpen]);
+
   // How many top-level comments aren't on screen yet.
   const unseenComments = commentsLoaded
     ? (commentsCursor ? commentCount - comments.length : 0)
@@ -189,53 +252,152 @@ export default function PostCard({
               <p className="_feed_inner_timeline_post_box_para">
                 {formatRelativeTime(post.createdAt)} .{" "}
                 <a href="#0">
-                  {post.visibility === "PRIVATE" ? "Private" : "Public"}
+                  {visibility === "PRIVATE" ? "Private" : "Public"}
                 </a>
               </p>
             </div>
           </div>
-          {isOwner && (
-            <div className="_feed_inner_timeline_post_box_dropdown">
-              <div className="_feed_timeline_post_dropdown">
-                <button
-                  type="button"
-                  className="_feed_timeline_post_dropdown_link"
-                  onClick={() => setDropdownOpen((prev) => !prev)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="4" height="17" fill="none" viewBox="0 0 4 17">
-                    <circle cx="2" cy="2" r="2" fill="#C4C4C4" />
-                    <circle cx="2" cy="8" r="2" fill="#C4C4C4" />
-                    <circle cx="2" cy="15" r="2" fill="#C4C4C4" />
-                  </svg>
-                </button>
-              </div>
-              <div className={`_feed_timeline_dropdown _timeline_dropdown${dropdownOpen ? " show" : ""}`}>
-                <ul className="_feed_timeline_dropdown_list">
-                  <li className="_feed_timeline_dropdown_item">
-                    <a
-                      href="#0"
-                      className="_feed_timeline_dropdown_link"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        void handleDelete();
-                      }}
-                      aria-busy={deleting}
-                    >
-                      <span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18">
-                          <path stroke="#1890FF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.2" d="M2.25 4.5h13.5M6 4.5V3a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0112 3v1.5m2.25 0V15a1.5 1.5 0 01-1.5 1.5h-7.5a1.5 1.5 0 01-1.5-1.5V4.5h10.5zM7.5 8.25v4.5M10.5 8.25v4.5"/>
-                        </svg>
-                      </span>
-                      {deleting ? "Deleting…" : "Delete Post"}
-                    </a>
-                  </li>
-                </ul>
-              </div>
+          <div className="_feed_inner_timeline_post_box_dropdown" ref={dropdownRef}>
+            <div className="_feed_timeline_post_dropdown">
+              <button
+                type="button"
+                className="_feed_timeline_post_dropdown_link"
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                aria-haspopup="menu"
+                aria-expanded={dropdownOpen}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="4" height="17" fill="none" viewBox="0 0 4 17">
+                  <circle cx="2" cy="2" r="2" fill="#C4C4C4" />
+                  <circle cx="2" cy="8" r="2" fill="#C4C4C4" />
+                  <circle cx="2" cy="15" r="2" fill="#C4C4C4" />
+                </svg>
+              </button>
             </div>
-          )}
+            {/* Dropdown — Save/Notification/Hide are presentational; only Edit
+                and Delete are wired, and only for the post's author. */}
+            <div className={`_feed_timeline_dropdown _timeline_dropdown${dropdownOpen ? " show" : ""}`}>
+              <ul className="_feed_timeline_dropdown_list">
+                <li className="_feed_timeline_dropdown_item">
+                  <a href="#0" className="_feed_timeline_dropdown_link" onClick={(e) => e.preventDefault()}>
+                    <span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18">
+                        <path stroke="#1890FF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.2" d="M14.25 15.75L9 12l-5.25 3.75v-12a1.5 1.5 0 011.5-1.5h7.5a1.5 1.5 0 011.5 1.5v12z"/>
+                      </svg>
+                    </span>
+                    Save Post
+                  </a>
+                </li>
+                <li className="_feed_timeline_dropdown_item">
+                  <a href="#0" className="_feed_timeline_dropdown_link" onClick={(e) => e.preventDefault()}>
+                    <span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" fill="none" viewBox="0 0 20 22">
+                        <path fill="#377DFF" fillRule="evenodd" d="M7.547 19.55c.533.59 1.218.915 1.93.915.714 0 1.403-.324 1.938-.916a.777.777 0 011.09-.056c.318.284.344.77.058 1.084-.832.917-1.927 1.423-3.086 1.423h-.002c-1.155-.001-2.248-.506-3.077-1.424a.762.762 0 01.057-1.083.774.774 0 011.092.057zM9.527 0c4.58 0 7.657 3.543 7.657 6.85 0 1.702.436 2.424.899 3.19.457.754.976 1.612.976 3.233-.36 4.14-4.713 4.478-9.531 4.478-4.818 0-9.172-.337-9.528-4.413-.003-1.686.515-2.544.973-3.299l.161-.27c.398-.679.737-1.417.737-2.918C1.871 3.543 4.948 0 9.528 0zm0 1.535c-3.6 0-6.11 2.802-6.11 5.316 0 2.127-.595 3.11-1.12 3.978-.422.697-.755 1.247-.755 2.444.173 1.93 1.455 2.944 7.986 2.944 6.494 0 7.817-1.06 7.988-3.01-.003-1.13-.336-1.681-.757-2.378-.526-.868-1.12-1.851-1.12-3.978 0-2.514-2.51-5.316-6.111-5.316z" clipRule="evenodd"/>
+                      </svg>
+                    </span>
+                    Turn On Notification
+                  </a>
+                </li>
+                <li className="_feed_timeline_dropdown_item">
+                  <a href="#0" className="_feed_timeline_dropdown_link" onClick={(e) => e.preventDefault()}>
+                    <span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18">
+                        <path stroke="#1890FF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.2" d="M14.25 2.25H3.75a1.5 1.5 0 00-1.5 1.5v10.5a1.5 1.5 0 001.5 1.5h10.5a1.5 1.5 0 001.5-1.5V3.75a1.5 1.5 0 00-1.5-1.5zM6.75 6.75l4.5 4.5M11.25 6.75l-4.5 4.5"/>
+                      </svg>
+                    </span>
+                    Hide
+                  </a>
+                </li>
+                {isOwner && (
+                  <>
+                    <li className="_feed_timeline_dropdown_item">
+                      <a
+                        href="#0"
+                        className="_feed_timeline_dropdown_link"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          startEdit();
+                        }}
+                      >
+                        <span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18">
+                            <path stroke="#1890FF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.2" d="M8.25 3H3a1.5 1.5 0 00-1.5 1.5V15A1.5 1.5 0 003 16.5h10.5A1.5 1.5 0 0015 15V9.75"/>
+                            <path stroke="#1890FF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.2" d="M13.875 1.875a1.591 1.591 0 112.25 2.25L9 11.25 6 12l.75-3 7.125-7.125z"/>
+                          </svg>
+                        </span>
+                        Edit Post
+                      </a>
+                    </li>
+                    <li className="_feed_timeline_dropdown_item">
+                      <a
+                        href="#0"
+                        className="_feed_timeline_dropdown_link"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          void handleDelete();
+                        }}
+                        aria-busy={deleting}
+                      >
+                        <span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18">
+                            <path stroke="#1890FF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.2" d="M2.25 4.5h13.5M6 4.5V3a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0112 3v1.5m2.25 0V15a1.5 1.5 0 01-1.5 1.5h-7.5a1.5 1.5 0 01-1.5-1.5V4.5h10.5zM7.5 8.25v4.5M10.5 8.25v4.5"/>
+                          </svg>
+                        </span>
+                        {deleting ? "Deleting…" : "Delete Post"}
+                      </a>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+          </div>
         </div>
-        {post.content && (
-          <h4 className="_feed_inner_timeline_post_title">{post.content}</h4>
+        {editing ? (
+          <div className="_feed_inner_timeline_post_edit" style={{ marginTop: 8 }}>
+            <textarea
+              className="form-control _textarea"
+              value={editContent}
+              onChange={(event) => setEditContent(event.target.value)}
+              rows={3}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8 }}
+            />
+            {editError && (
+              <p style={{ color: "#d00", fontSize: 13, margin: "6px 0 0" }} role="alert">
+                {editError}
+              </p>
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10 }}>
+              <select
+                value={editVisibility}
+                onChange={(event) => setEditVisibility(event.target.value as Visibility)}
+                aria-label="Post visibility"
+                style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #ddd", color: "#666" }}
+              >
+                <option value="PUBLIC">Public</option>
+                <option value="PRIVATE">Private</option>
+              </select>
+              <button
+                type="button"
+                onClick={saveEdit}
+                disabled={savingEdit || !editContent.trim()}
+                aria-busy={savingEdit}
+                style={{ padding: "6px 18px", borderRadius: 6, border: "none", background: "#377DFF", color: "#fff", cursor: "pointer" }}
+              >
+                {savingEdit ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                disabled={savingEdit}
+                style={{ padding: "6px 18px", borderRadius: 6, border: "1px solid #ddd", background: "transparent", color: "#666", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          content && (
+            <h4 className="_feed_inner_timeline_post_title">{content}</h4>
+          )
         )}
         {post.imageUrl && (
           <div className="_feed_inner_timeline_image">

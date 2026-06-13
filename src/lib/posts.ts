@@ -74,6 +74,21 @@ export function createPost(input: CreatePostInput): Promise<{ post: Post }> {
   });
 }
 
+export interface UpdatePostInput {
+  content?: string;
+  visibility?: Visibility;
+}
+
+export function updatePost(
+  id: string,
+  input: UpdatePostInput
+): Promise<{ post: Post }> {
+  return api<{ post: Post }>(`/api/posts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
 export function deletePost(id: string): Promise<void> {
   return api<void>(`/api/posts/${id}`, { method: "DELETE" });
 }
