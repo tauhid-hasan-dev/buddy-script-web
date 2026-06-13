@@ -2,6 +2,48 @@ import { api } from "./api";
 
 export type Visibility = "PUBLIC" | "PRIVATE";
 
+// Mirrors the server's ReactionType enum. Order matches the picker's
+// left-to-right layout (Facebook order).
+export type ReactionType =
+  | "LIKE"
+  | "LOVE"
+  | "CARE"
+  | "HAHA"
+  | "WOW"
+  | "SAD"
+  | "ANGRY";
+
+// Presentation metadata for each reaction: the emoji shown in the picker and
+// the stacked faces, the verb shown on the active button, and the label color
+// matching Facebook's palette. Ordered as the picker renders them.
+export const REACTIONS: {
+  type: ReactionType;
+  emoji: string;
+  label: string;
+  color: string;
+}[] = [
+  { type: "LIKE", emoji: "👍", label: "Like", color: "#377dff" },
+  { type: "LOVE", emoji: "❤️", label: "Love", color: "#f33e58" },
+  { type: "CARE", emoji: "🤗", label: "Care", color: "#f7b125" },
+  { type: "HAHA", emoji: "😆", label: "Haha", color: "#f7b125" },
+  { type: "WOW", emoji: "😮", label: "Wow", color: "#f7b125" },
+  { type: "SAD", emoji: "😢", label: "Sad", color: "#f7b125" },
+  { type: "ANGRY", emoji: "😡", label: "Angry", color: "#e9710f" },
+];
+
+export const REACTION_BY_TYPE: Record<
+  ReactionType,
+  (typeof REACTIONS)[number]
+> = Object.fromEntries(REACTIONS.map((r) => [r.type, r])) as Record<
+  ReactionType,
+  (typeof REACTIONS)[number]
+>;
+
+export interface ReactionCount {
+  type: ReactionType;
+  count: number;
+}
+
 export interface PostAuthor {
   id: string;
   firstName: string;
@@ -20,6 +62,8 @@ export interface Post {
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
+  myReaction: ReactionType | null;
+  reactions: ReactionCount[];
 }
 
 export interface FeedPage {
@@ -30,10 +74,13 @@ export interface FeedPage {
 export interface LikeState {
   liked: boolean;
   likeCount: number;
+  myReaction: ReactionType | null;
+  reactions: ReactionCount[];
 }
 
 export interface LikerEntry {
   likedAt: string;
+  type: ReactionType;
   user: PostAuthor;
 }
 
@@ -93,11 +140,20 @@ export function deletePost(id: string): Promise<void> {
   return api<void>(`/api/posts/${id}`, { method: "DELETE" });
 }
 
-export function likePost(id: string): Promise<LikeState> {
-  return api<LikeState>(`/api/posts/${id}/like`, { method: "POST" });
+// Set (or change) the viewer's reaction on a post. Defaults to LIKE so a bare
+// thumbs-up tap matches the legacy endpoint.
+export function reactToPost(
+  id: string,
+  type: ReactionType = "LIKE"
+): Promise<LikeState> {
+  return api<LikeState>(`/api/posts/${id}/like`, {
+    method: "POST",
+    body: JSON.stringify({ type }),
+  });
 }
 
-export function unlikePost(id: string): Promise<LikeState> {
+// Remove the viewer's reaction entirely.
+export function unreactPost(id: string): Promise<LikeState> {
   return api<LikeState>(`/api/posts/${id}/like`, { method: "DELETE" });
 }
 

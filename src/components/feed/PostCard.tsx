@@ -6,11 +6,15 @@ import { ApiError } from "@/lib/api";
 import { fullName, formatRelativeTime } from "@/lib/format";
 import {
   deletePost,
-  likePost,
-  unlikePost,
+  reactToPost,
+  unreactPost,
   updatePost,
   getPostLikers,
+  REACTIONS,
+  REACTION_BY_TYPE,
   type Post,
+  type ReactionCount,
+  type ReactionType,
   type Visibility,
 } from "@/lib/posts";
 import {
@@ -118,9 +122,12 @@ export default function PostCard({
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  const [likedByMe, setLikedByMe] = useState(post.likedByMe);
+  const [myReaction, setMyReaction] = useState<ReactionType | null>(post.myReaction);
   const [likeCount, setLikeCount] = useState(post.likeCount);
-  const [likePending, setLikePending] = useState(false);
+  const [reactions, setReactions] = useState<ReactionCount[]>(post.reactions);
+  const [reactPending, setReactPending] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentCount, setCommentCount] = useState(post.commentCount);
@@ -130,23 +137,70 @@ export default function PostCard({
 
   const isOwner = currentUser?.id === post.author.id;
 
-  async function toggleLike() {
-    if (likePending) return;
-    setLikePending(true);
-    const next = !likedByMe;
-    setLikedByMe(next);
-    setLikeCount((c) => c + (next ? 1 : -1));
+  // Optimistically recompute the per-type breakdown for an instant UI update;
+  // the server response then reconciles it to the authoritative tallies.
+  function recomputeReactions(
+    list: ReactionCount[],
+    from: ReactionType | null,
+    to: ReactionType | null
+  ): ReactionCount[] {
+    const counts = new Map<ReactionType, number>(
+      list.map((r) => [r.type, r.count])
+    );
+    if (from) counts.set(from, (counts.get(from) ?? 1) - 1);
+    if (to) counts.set(to, (counts.get(to) ?? 0) + 1);
+    return [...counts.entries()]
+      .filter(([, count]) => count > 0)
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  // Set a reaction, switch types, or clear it (next === null). One code path
+  // for the picker, the button toggle, and rollback.
+  async function applyReaction(next: ReactionType | null) {
+    if (reactPending) return;
+    setPickerOpen(false);
+    setReactPending(true);
+
+    const prev = { myReaction, likeCount, reactions };
+    const optimistic = recomputeReactions(reactions, myReaction, next);
+    setMyReaction(next);
+    setReactions(optimistic);
+    setLikeCount(optimistic.reduce((sum, r) => sum + r.count, 0));
+
     try {
-      const state = next ? await likePost(post.id) : await unlikePost(post.id);
-      setLikedByMe(state.liked);
+      const state =
+        next === null ? await unreactPost(post.id) : await reactToPost(post.id, next);
+      setMyReaction(state.myReaction);
       setLikeCount(state.likeCount);
+      setReactions(state.reactions);
     } catch {
-      setLikedByMe(!next);
-      setLikeCount((c) => c + (next ? -1 : 1));
+      setMyReaction(prev.myReaction);
+      setLikeCount(prev.likeCount);
+      setReactions(prev.reactions);
     } finally {
-      setLikePending(false);
+      setReactPending(false);
     }
   }
+
+  // Clicking the main button likes when there's no reaction yet, otherwise
+  // clears the current one (Facebook behavior).
+  function toggleReaction() {
+    void applyReaction(myReaction ? null : "LIKE");
+  }
+
+  // Small open/close delay so the picker doesn't flicker as the cursor travels
+  // between the button and the popover.
+  function openPicker() {
+    if (pickerTimer.current) clearTimeout(pickerTimer.current);
+    setPickerOpen(true);
+  }
+  function closePickerSoon() {
+    if (pickerTimer.current) clearTimeout(pickerTimer.current);
+    pickerTimer.current = setTimeout(() => setPickerOpen(false), 200);
+  }
+
+  const activeReaction = myReaction ? REACTION_BY_TYPE[myReaction] : null;
 
   async function loadComments() {
     if (loadingComments) return;
@@ -231,6 +285,11 @@ export default function PostCard({
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [dropdownOpen]);
+
+  // Clear any pending picker-close timer when the card unmounts.
+  useEffect(() => () => {
+    if (pickerTimer.current) clearTimeout(pickerTimer.current);
+  }, []);
 
   // How many top-level comments aren't on screen yet.
   const unseenComments = commentsLoaded
@@ -406,14 +465,40 @@ export default function PostCard({
         )}
       </div>
       <div className="_feed_inner_timeline_total_reacts _padd_r24 _padd_l24 _mar_b26">
+        {/* Stacked faces: one circle per distinct reaction type present
+            (most popular first, like the reference), then the total count —
+            clickable to see who reacted and with what. */}
         <div className="_feed_inner_timeline_total_reacts_image">
-          <p className="_feed_inner_timeline_total_reacts_para">
-            <Likers
-              count={likeCount}
-              label={likeCount === 1 ? "Like" : "Likes"}
-              fetcher={(page) => getPostLikers(post.id, page)}
-            />
-          </p>
+          {likeCount > 0 && (
+            <>
+              {reactions.slice(0, 5).map((reaction, index) => (
+                <span
+                  key={reaction.type}
+                  className={index === 0 ? "_react_img1" : "_react_img"}
+                  title={`${REACTION_BY_TYPE[reaction.type].label} · ${reaction.count}`}
+                  aria-label={REACTION_BY_TYPE[reaction.type].label}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 32,
+                    height: 32,
+                    fontSize: 16,
+                    lineHeight: 1,
+                  }}
+                >
+                  {REACTION_BY_TYPE[reaction.type].emoji}
+                </span>
+              ))}
+              <p className="_feed_inner_timeline_total_reacts_para">
+                <Likers
+                  count={likeCount}
+                  label=""
+                  fetcher={(page) => getPostLikers(post.id, page)}
+                />
+              </p>
+            </>
+          )}
         </div>
         <div className="_feed_inner_timeline_total_reacts_txt">
           <p className="_feed_inner_timeline_total_reacts_para1">
@@ -423,22 +508,86 @@ export default function PostCard({
           </p>
         </div>
       </div>
+      {/* Action bar, in the reference's order: Like · Comment · Share. The
+          Like button hover-reveals the seven-reaction picker; clicking it
+          toggles a plain Like. Comment and Share are presentational. */}
       <div className="_feed_inner_timeline_reaction">
-        <button
-          className={`_feed_inner_timeline_reaction_emoji _feed_reaction${likedByMe ? " _feed_reaction_active" : ""}`}
-          onClick={toggleLike}
-          disabled={likePending}
+        <div
+          style={{ position: "relative", flex: "1 1", display: "flex", margin: "0 4px 0 0" }}
+          onMouseEnter={openPicker}
+          onMouseLeave={closePickerSoon}
         >
-          <span className="_feed_inner_timeline_reaction_link">
-            {" "}
-            <span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-thumbs-up">
-                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-              </svg>
-              {likedByMe ? "Liked" : "Like"}
+          {pickerOpen && (
+            <span
+              role="menu"
+              aria-label="Pick a reaction"
+              onMouseEnter={openPicker}
+              onMouseLeave={closePickerSoon}
+              style={{
+                position: "absolute",
+                bottom: "100%",
+                left: 0,
+                marginBottom: 8,
+                display: "flex",
+                gap: 4,
+                padding: "6px 10px",
+                background: "#fff",
+                borderRadius: 30,
+                boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
+                zIndex: 30,
+              }}
+            >
+              {REACTIONS.map((reaction) => (
+                <button
+                  key={reaction.type}
+                  type="button"
+                  role="menuitem"
+                  title={reaction.label}
+                  aria-label={reaction.label}
+                  data-reaction={reaction.type}
+                  onClick={() => void applyReaction(reaction.type)}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    fontSize: 26,
+                    lineHeight: 1,
+                    padding: 2,
+                    transition: "transform .1s ease",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.3)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                >
+                  {reaction.emoji}
+                </button>
+              ))}
             </span>
-          </span>
-        </button>
+          )}
+          <button
+            className={`_feed_inner_timeline_reaction_emoji _feed_reaction${activeReaction ? " _feed_reaction_active" : ""}`}
+            onClick={toggleReaction}
+            disabled={reactPending}
+            aria-haspopup="menu"
+            aria-expanded={pickerOpen}
+            style={{ flex: "1 1", margin: 0 }}
+          >
+            <span className="_feed_inner_timeline_reaction_link">
+              {" "}
+              <span style={activeReaction ? { color: activeReaction.color } : undefined}>
+                {activeReaction ? (
+                  <span style={{ marginRight: 8, fontSize: 16 }} aria-hidden="true">
+                    {activeReaction.emoji}
+                  </span>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-thumbs-up">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                  </svg>
+                )}
+                {activeReaction ? activeReaction.label : "Like"}
+              </span>
+            </span>
+          </button>
+        </div>
         <button className="_feed_inner_timeline_reaction_comment _feed_reaction">
           <span className="_feed_inner_timeline_reaction_link">
             {" "}
@@ -448,6 +597,17 @@ export default function PostCard({
                 <path stroke="#000" strokeLinecap="round" strokeLinejoin="round" d="M6.938 9.313h7.125M10.5 14.063h3.563"/>
               </svg>
               Comment
+            </span>
+          </span>
+        </button>
+        <button className="_feed_inner_timeline_reaction_share _feed_reaction" type="button">
+          <span className="_feed_inner_timeline_reaction_link">
+            {" "}
+            <span>
+              <svg className="_reaction_svg" xmlns="http://www.w3.org/2000/svg" width="24" height="21" fill="none" viewBox="0 0 24 21">
+                <path stroke="#000" strokeLinejoin="round" d="M23 10.5L12.917 1v5.429C3.267 6.429 1 13.258 1 20c2.785-3.52 5.248-5.429 11.917-5.429V20L23 10.5z"/>
+              </svg>
+              Share
             </span>
           </span>
         </button>

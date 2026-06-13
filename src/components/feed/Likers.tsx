@@ -3,11 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 
 import { fullName } from "@/lib/format";
-import type { LikersPage } from "@/lib/posts";
+import { REACTION_BY_TYPE, type PostAuthor, type ReactionType } from "@/lib/posts";
 
-// A clickable like count that opens a small popover listing who liked the
-// post/comment/reply. The fetcher is injected so the same component serves
-// posts and comments without knowing which endpoint it hits.
+// The minimal page shape Likers needs. Post likers carry a reaction `type`;
+// comment likers (binary likes) don't, so it's optional.
+interface LikerLike {
+  user: PostAuthor;
+  type?: ReactionType;
+}
+interface LikersPageLike {
+  likes: LikerLike[];
+}
+
+interface LikerName {
+  name: string;
+  type?: ReactionType;
+}
+
+// A clickable count that opens a small popover listing who reacted to the
+// post/comment/reply (with each person's reaction emoji when available). The
+// fetcher is injected so the same component serves posts and comments without
+// knowing which endpoint it hits.
 export default function Likers({
   count,
   label,
@@ -15,10 +31,10 @@ export default function Likers({
 }: {
   count: number;
   label: string;
-  fetcher: (page: number) => Promise<LikersPage>;
+  fetcher: (page: number) => Promise<LikersPageLike>;
 }) {
   const [open, setOpen] = useState(false);
-  const [names, setNames] = useState<string[] | null>(null);
+  const [names, setNames] = useState<LikerName[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
@@ -43,7 +59,12 @@ export default function Likers({
       setError(false);
       try {
         const page = await fetcher(1);
-        setNames(page.likes.map((entry) => fullName(entry.user)));
+        setNames(
+          page.likes.map((entry) => ({
+            name: fullName(entry.user),
+            type: entry.type,
+          }))
+        );
       } catch {
         setError(true);
       } finally {
@@ -87,12 +108,12 @@ export default function Likers({
             </span>
           )}
           {!loading && !error && names && names.length === 0 && (
-            <span style={{ fontSize: 13 }}>No likes yet.</span>
+            <span style={{ fontSize: 13 }}>No reactions yet.</span>
           )}
           {!loading &&
             !error &&
             names &&
-            names.map((name, i) => (
+            names.map((entry, i) => (
               <span
                 key={i}
                 style={{
@@ -102,7 +123,12 @@ export default function Likers({
                   color: "#112032",
                 }}
               >
-                {name}
+                {entry.type && (
+                  <span style={{ marginRight: 6 }}>
+                    {REACTION_BY_TYPE[entry.type].emoji}
+                  </span>
+                )}
+                {entry.name}
               </span>
             ))}
         </span>

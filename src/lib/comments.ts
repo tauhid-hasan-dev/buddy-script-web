@@ -1,5 +1,22 @@
 import { api } from "./api";
-import type { LikeState, LikersPage, PostAuthor } from "./posts";
+import type { PostAuthor } from "./posts";
+
+// Comment likes are a simple binary like (reactions are a post-only feature),
+// so they keep their own shapes rather than reusing the post LikeState.
+export interface CommentLikeState {
+  liked: boolean;
+  likeCount: number;
+}
+
+export interface CommentLikerEntry {
+  likedAt: string;
+  user: PostAuthor;
+}
+
+export interface CommentLikersPage {
+  likes: CommentLikerEntry[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
 
 // Mirrors the server's ICommentDto (comments.interface.ts). A null parentId is
 // a top-level comment; a set parentId is a reply (one level of nesting only).
@@ -58,14 +75,14 @@ export function getReplies(
   return api<RepliesPage>(`/api/comments/${commentId}/replies?${params.toString()}`);
 }
 
-export function likeComment(id: string): Promise<LikeState> {
-  return api<LikeState>(`/api/comments/${id}/like`, { method: "POST" });
+export function likeComment(id: string): Promise<CommentLikeState> {
+  return api<CommentLikeState>(`/api/comments/${id}/like`, { method: "POST" });
 }
 
-export function unlikeComment(id: string): Promise<LikeState> {
-  return api<LikeState>(`/api/comments/${id}/like`, { method: "DELETE" });
+export function unlikeComment(id: string): Promise<CommentLikeState> {
+  return api<CommentLikeState>(`/api/comments/${id}/like`, { method: "DELETE" });
 }
 
-export function getCommentLikers(id: string, page = 1): Promise<LikersPage> {
-  return api<LikersPage>(`/api/comments/${id}/likes?page=${page}&limit=20`);
+export function getCommentLikers(id: string, page = 1): Promise<CommentLikersPage> {
+  return api<CommentLikersPage>(`/api/comments/${id}/likes?page=${page}&limit=20`);
 }
