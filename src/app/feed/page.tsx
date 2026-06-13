@@ -5,13 +5,12 @@ import "@/styles/common.css";
 import "@/styles/main.css";
 import "@/styles/responsive.css";
 
-import CreatePost from "@/components/feed/CreatePost";
+import Feed from "@/components/feed/Feed";
 import FeedLayout from "@/components/feed/FeedLayout";
 import Header from "@/components/feed/Header";
 import LeftSidebar from "@/components/feed/LeftSidebar";
 import MobileBottomNav from "@/components/feed/MobileBottomNav";
 import MobileHeader from "@/components/feed/MobileHeader";
-import PostCard from "@/components/feed/PostCard";
 import RightSidebar from "@/components/feed/RightSidebar";
 import Stories from "@/components/feed/Stories";
 
@@ -54,9 +53,7 @@ export default function FeedPage() {
                 <div className="_layout_middle_wrap">
                   <div className="_layout_middle_inner">
                     <Stories />
-                    <CreatePost />
-                    <PostCard />
-                    <PostCard />
+                    <Feed />
                   </div>
                 </div>
               </div>

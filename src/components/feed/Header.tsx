@@ -1,9 +1,10 @@
 "use client";
 
-import { Fragment, useState, type MouseEvent } from "react";
+import { Fragment, useEffect, useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 
-import { logout } from "@/lib/auth";
+import { getMe, logout } from "@/lib/auth";
+import { fullName } from "@/lib/format";
 
 function PostNotification() {
   return (
@@ -49,6 +50,21 @@ export default function Header() {
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    getMe()
+      .then((res) => {
+        if (!cancelled) setDisplayName(fullName(res.user));
+      })
+      .catch(() => {
+        // Header just falls back to no name; the API guard handles real auth.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleLogout(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
@@ -176,7 +192,7 @@ export default function Header() {
               <img src="/assets/images/profile.png" alt="Image" className="_nav_profile_img" />
             </div>
             <div className="_header_nav_dropdown">
-              <p className="_header_nav_para">Dylan Field</p>
+              <p className="_header_nav_para">{displayName || "…"}</p>
               <button
                 id="_profile_drop_show_btn"
                 className="_header_nav_dropdown_btn _dropdown_toggle"
@@ -195,7 +211,7 @@ export default function Header() {
                   <img src="/assets/images/profile.png" alt="Image" className="_nav_drop_img" />
                 </div>
                 <div className="_nav_profile_dropdown_info_txt">
-                  <h4 className="_nav_dropdown_title">Dylan Field</h4>
+                  <h4 className="_nav_dropdown_title">{displayName || "…"}</h4>
                   <a href="/profile" className="_nav_drop_profile">
                     View Profile
                   </a>
