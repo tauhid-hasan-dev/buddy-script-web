@@ -6022,9 +6022,12 @@
 ._comment_reply_list {
     display: flex;
     align-items: center;
+    flex-wrap: nowrap;
+    white-space: nowrap;
 }
 ._comment_reply_list li {
     margin:0 2px;
+    white-space: nowrap;
 }
 ._comment_reply_list li span {
     color:var(--color6);
