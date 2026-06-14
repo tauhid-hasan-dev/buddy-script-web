@@ -232,6 +232,9 @@ export default function CommentNode({
                   </li>
                 )}
                 <li>
+                  <span style={{ cursor: "pointer" }}>Share</span>
+                </li>
+                <li>
                   <span className="_time_link">.{formatRelativeTime(initial.createdAt)}</span>
                 </li>
               </ul>
