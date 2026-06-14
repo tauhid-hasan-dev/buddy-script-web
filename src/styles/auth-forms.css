@@ -19,6 +19,10 @@
   line-height: 1.5;
 }
 
+._auth_submit_btn {
+  white-space: nowrap;
+}
+
 ._auth_submit_btn[disabled] {
   opacity: 0.65;
   cursor: not-allowed;
