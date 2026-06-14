@@ -375,15 +375,44 @@
     margin:0 auto;
 }
 ._social_registration_wrapper {
-    padding: 100px 0px;
+    padding: 40px 0px;
     background: var(--bg1);
     position: relative;
     z-index: 1;
+    /* Fill the viewport and vertically centre the card. min-height (not height)
+       lets the section grow and scroll gracefully on short screens instead of
+       clipping the form. */
+    min-height: 100vh;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+}
+._social_registration_wrap {
+    width: 100%;
 }
 ._social_registration_content {
     background: var(--bg2);
-    padding: 48px;
+    padding: 40px;
     border-radius: 6px;
+}
+/* Tighten the card's tallest gaps so the form fits one viewport. Scoped to the
+   registration card and high-specificity so it trims the shared _mar_* spacing
+   utilities here only — login and feed keep their original spacing. */
+._social_registration_content ._social_registration_content_title {
+    margin-bottom: 28px;
+}
+._social_registration_content ._social_registration_content_btn {
+    margin-bottom: 24px;
+}
+._social_registration_content ._social_registration_content_bottom_txt {
+    margin-bottom: 22px;
+}
+._social_registration_content ._social_registration_form_btn {
+    margin-top: 24px;
+    margin-bottom: 0;
 }
 ._social_registration_content_para {
     font-weight: normal;
