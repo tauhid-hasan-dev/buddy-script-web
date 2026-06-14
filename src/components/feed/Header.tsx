@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState, type MouseEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { getMe, logout, type AuthUser } from "@/lib/auth";
@@ -52,6 +52,8 @@ export default function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const notifyRef = useRef<HTMLLIElement>(null);
   const displayName = user ? fullName(user) : "";
 
   useEffect(() => {
@@ -67,6 +69,22 @@ export default function Header() {
       cancelled = true;
     };
   }, []);
+
+  // Close the profile/notification dropdowns when clicking outside them.
+  useEffect(() => {
+    if (!profileOpen && !notifyOpen) return;
+    function onClickOutside(event: globalThis.MouseEvent) {
+      const target = event.target as Node;
+      if (profileRef.current && !profileRef.current.contains(target)) {
+        setProfileOpen(false);
+      }
+      if (notifyRef.current && !notifyRef.current.contains(target)) {
+        setNotifyOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [profileOpen, notifyOpen]);
 
   async function handleLogout(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
@@ -127,7 +145,7 @@ export default function Header() {
                 </svg>
               </a>
             </li>
-            <li className="nav-item _header_nav_item">
+            <li className="nav-item _header_nav_item" ref={notifyRef}>
               <span
                 id="_notify_btn"
                 className="nav-link _header_nav_link _header_notify_btn"
@@ -189,12 +207,22 @@ export default function Header() {
               </a>
             </li>
           </ul>
-          <div className="_header_nav_profile">
-            <div className="_header_nav_profile_image">
+          <div className="_header_nav_profile" ref={profileRef}>
+            <div
+              className="_header_nav_profile_image"
+              style={{ cursor: "pointer" }}
+              onClick={() => setProfileOpen((prev) => !prev)}
+            >
               <Avatar src={user?.avatarUrl} name={displayName} className="_nav_profile_img" size={24} />
             </div>
             <div className="_header_nav_dropdown">
-              <p className="_header_nav_para">{displayName || "…"}</p>
+              <p
+                className="_header_nav_para"
+                style={{ cursor: "pointer" }}
+                onClick={() => setProfileOpen((prev) => !prev)}
+              >
+                {displayName || "…"}
+              </p>
               <button
                 id="_profile_drop_show_btn"
                 className="_header_nav_dropdown_btn _dropdown_toggle"
