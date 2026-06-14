@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 // Default-avatar palette (in the requested order: blue, green, purple, red).
 // A user with no uploaded photo gets their initials on one of these — the
@@ -53,9 +54,11 @@ export default function Avatar({
 
   if (src && !failed) {
     return (
-      <img
+      <Image
         src={src}
         alt={name ?? ""}
+        width={size}
+        height={size}
         className={className}
         style={{ ...box, objectFit: "cover", display: "block", flex: "0 0 auto" }}
         onError={() => setFailed(true)}

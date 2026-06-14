@@ -15,6 +15,27 @@ const eslintConfig = defineConfig([
     // Vendored HTML template the pages are converted from — not source code.
     "reference/**",
   ]),
+  // Content images (avatars, post images) use next/image. These files only
+  // render decorative template chrome (background SVG shapes, logos, fixed-size
+  // story/sidebar thumbnails) sized by the template's CSS classes, plus the
+  // local object-URL upload preview in CreatePost — cases where next/image adds
+  // no optimization benefit and its required width/height would fight the
+  // pixel-matched layout. Keep plain <img> here intentionally.
+  {
+    files: [
+      "src/app/login/page.tsx",
+      "src/app/register/page.tsx",
+      "src/components/feed/Header.tsx",
+      "src/components/feed/MobileHeader.tsx",
+      "src/components/feed/LeftSidebar.tsx",
+      "src/components/feed/RightSidebar.tsx",
+      "src/components/feed/Stories.tsx",
+      "src/components/feed/CreatePost.tsx",
+    ],
+    rules: {
+      "@next/next/no-img-element": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

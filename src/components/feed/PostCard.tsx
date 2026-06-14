@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 import { ApiError } from "@/lib/api";
 import { fullName, formatRelativeTime } from "@/lib/format";
@@ -478,7 +479,18 @@ export default function PostCard({
         )}
         {post.imageUrl && (
           <div className="_feed_inner_timeline_image">
-            <img src={post.imageUrl} alt="" className="_time_img" />
+            {/* Post images have no known intrinsic size, so use Next's
+                responsive pattern: 0/0 + sizes + auto height keeps the natural
+                aspect ratio while filling the column width. */}
+            <Image
+              src={post.imageUrl}
+              alt=""
+              width={0}
+              height={0}
+              sizes="(max-width: 768px) 100vw, 600px"
+              className="_time_img"
+              style={{ width: "100%", height: "auto" }}
+            />
           </div>
         )}
       </div>

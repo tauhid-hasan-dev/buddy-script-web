@@ -17,6 +17,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  images: {
+    // User avatars and post images are served as Supabase Storage public URLs
+    // (https://<project>.supabase.co/storage/v1/object/public/<bucket>/...).
+    // next/image needs every remote host explicitly allow-listed.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
