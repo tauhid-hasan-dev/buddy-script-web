@@ -142,8 +142,21 @@ export default function ProfileView() {
 
   if (loading) {
     return (
-      <div className="_uprofile_wrap">
-        <p style={{ textAlign: "center", color: "var(--color7)" }}>Loading your profile…</p>
+      <div className="_uprofile_wrap" aria-busy="true" aria-label="Loading your profile">
+        <div className="_uprofile_card">
+          <div className="_uprofile_cover" />
+          <div className="_uprofile_head">
+            <div className="_uprofile_skel_block _uprofile_skel_avatar" />
+            <div className="_uprofile_identity">
+              <div className="_uprofile_skel_block _uprofile_skel_name" />
+              <div className="_uprofile_skel_block _uprofile_skel_meta" />
+              <div className="_uprofile_skel_block _uprofile_skel_meta _is_short" />
+            </div>
+            <div className="_uprofile_actions">
+              <div className="_uprofile_skel_block _uprofile_skel_btn" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

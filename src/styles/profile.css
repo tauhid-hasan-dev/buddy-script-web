@@ -182,6 +182,60 @@
   margin: 8px 0 0;
 }
 
+/* ---- Loading skeleton ---- */
+/* Mirrors the card layout (cover · avatar · name/email · action buttons) so
+   the page does not shift when the real profile loads in. */
+._uprofile_skel_block {
+  background: #e4e9f1;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+._uprofile_skel_block::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%
+  );
+  animation: _uprofile_shimmer 1.4s ease-in-out infinite;
+}
+@keyframes _uprofile_shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+._uprofile_skel_avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 3px solid var(--bg2);
+  flex: 0 0 auto;
+}
+._uprofile_skel_name {
+  width: 180px;
+  height: 22px;
+  margin-bottom: 8px;
+}
+._uprofile_skel_meta {
+  width: 240px;
+  height: 14px;
+  margin-bottom: 6px;
+}
+._uprofile_skel_meta._is_short {
+  width: 150px;
+}
+._uprofile_skel_btn {
+  width: 110px;
+  height: 38px;
+  border-radius: 8px;
+}
+
 /* ---- Dark mode ---- */
 ._dark_wrapper ._uprofile_card {
   background: var(--bg6);
@@ -209,4 +263,18 @@
   background: #1b2536;
   border-color: #3a4a63;
   color: var(--bg2);
+}
+._dark_wrapper ._uprofile_skel_block {
+  background: #283242;
+}
+._dark_wrapper ._uprofile_skel_block::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+}
+._dark_wrapper ._uprofile_skel_avatar {
+  border-color: var(--bg6);
 }
