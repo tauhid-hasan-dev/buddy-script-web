@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { getFeed, type FeedPage, type Post } from "@/lib/posts";
 import { useCurrentUser } from "@/lib/currentUser";
+import { useNewPosts } from "@/lib/useNewPosts";
 import Spinner from "@/components/Spinner";
 import CreatePost from "./CreatePost";
 import PostCard from "./PostCard";
@@ -59,6 +60,30 @@ export default function Feed({ initialPage }: { initialPage: FeedPage | null }) 
     // New posts are the newest, so they go to the top.
     setPosts((prev) => [post, ...prev]);
   }, []);
+
+  // Keep a live read of the newest rendered post id for the poller, without
+  // making the polling effect depend on (and restart with) every feed change.
+  const postsRef = useRef<Post[]>(posts);
+  postsRef.current = posts;
+  const getNewestId = useCallback(
+    () => postsRef.current[0]?.id ?? null,
+    []
+  );
+
+  // Merge in posts authored by *other* users (or this user in another tab) that
+  // arrived since the last render, newest on top, de-duped against what we have
+  // — so a poll never double-inserts the post we just created optimistically.
+  const handleIncoming = useCallback((incoming: Post[]) => {
+    setPosts((prev) => {
+      const known = new Set(prev.map((p) => p.id));
+      const additions = incoming.filter((p) => !known.has(p.id));
+      if (additions.length === 0) return prev;
+      return [...additions, ...prev];
+    });
+  }, []);
+
+  // Only poll once the first page is in hand (avoids racing the initial load).
+  useNewPosts(getNewestId, handleIncoming, !loading);
 
   const handleDeleted = useCallback((id: string) => {
     setPosts((prev) => prev.filter((post) => post.id !== id));

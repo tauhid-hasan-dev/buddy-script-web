@@ -104,6 +104,19 @@ export function getFeed(cursor?: string, limit = 20): Promise<FeedPage> {
   return api<FeedPage>(`/api/feed?${params.toString()}`);
 }
 
+export interface FeedUpdates {
+  posts: Post[];
+  hasMore: boolean;
+}
+
+// Live-update poll: posts newer than `after` (the newest post id the client
+// already shows). Hits an uncached endpoint so other users' posts appear within
+// a poll interval instead of waiting out the feed's first-page cache TTL.
+export function getFeedUpdates(after: string, limit = 10): Promise<FeedUpdates> {
+  const params = new URLSearchParams({ after, limit: String(limit) });
+  return api<FeedUpdates>(`/api/feed/updates?${params.toString()}`);
+}
+
 export function createPost(input: CreatePostInput): Promise<{ post: Post }> {
   // With an image we must send multipart/form-data; without one, plain JSON
   // is lighter and the server accepts both.
