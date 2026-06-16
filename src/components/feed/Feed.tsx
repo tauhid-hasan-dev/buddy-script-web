@@ -2,12 +2,23 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { getFeed, type FeedPage, type Post } from "@/lib/posts";
+import { getFeed, type FeedPage, type Post, type PostState } from "@/lib/posts";
 import { useCurrentUser } from "@/lib/currentUser";
 import { useNewPosts } from "@/lib/useNewPosts";
 import Spinner from "@/components/Spinner";
 import CreatePost from "./CreatePost";
 import PostCard from "./PostCard";
+
+// Reaction tallies come back in a deterministic order (count desc, then type),
+// so equality is a positional compare — cheap, and lets the feed skip patching
+// (and re-rendering) posts whose reactions didn't actually change.
+function sameReactions(
+  a: Post["reactions"],
+  b: Post["reactions"]
+): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((r, i) => r.type === b[i].type && r.count === b[i].count);
+}
 
 export default function Feed({ initialPage }: { initialPage: FeedPage | null }) {
   const { user: currentUser } = useCurrentUser();
@@ -61,12 +72,13 @@ export default function Feed({ initialPage }: { initialPage: FeedPage | null }) 
     setPosts((prev) => [post, ...prev]);
   }, []);
 
-  // Keep a live read of the newest rendered post id for the poller, without
-  // making the polling effect depend on (and restart with) every feed change.
+  // Keep a live read of the rendered posts for the poller, without making the
+  // polling effect depend on (and restart with) every feed change.
   const postsRef = useRef<Post[]>(posts);
   postsRef.current = posts;
-  const getNewestId = useCallback(
-    () => postsRef.current[0]?.id ?? null,
+  const getNewestId = useCallback(() => postsRef.current[0]?.id ?? null, []);
+  const getVisibleIds = useCallback(
+    () => postsRef.current.map((p) => p.id),
     []
   );
 
@@ -82,8 +94,48 @@ export default function Feed({ initialPage }: { initialPage: FeedPage | null }) 
     });
   }, []);
 
+  // Patch live like/comment state onto posts already on screen. Only the
+  // mutable counts change; content/author/image are left as-is. Posts whose
+  // state is unchanged keep their existing object reference, so PostCard only
+  // re-syncs the cards that actually moved.
+  const handleUpdated = useCallback((updates: PostState[]) => {
+    setPosts((prev) => {
+      const byId = new Map(updates.map((u) => [u.id, u]));
+      let changed = false;
+      const next = prev.map((post) => {
+        const u = byId.get(post.id);
+        if (!u) return post;
+        if (
+          post.likeCount === u.likeCount &&
+          post.commentCount === u.commentCount &&
+          post.likedByMe === u.likedByMe &&
+          post.myReaction === u.myReaction &&
+          sameReactions(post.reactions, u.reactions)
+        ) {
+          return post;
+        }
+        changed = true;
+        return {
+          ...post,
+          likeCount: u.likeCount,
+          commentCount: u.commentCount,
+          likedByMe: u.likedByMe,
+          myReaction: u.myReaction,
+          reactions: u.reactions,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, []);
+
   // Only poll once the first page is in hand (avoids racing the initial load).
-  useNewPosts(getNewestId, handleIncoming, !loading);
+  useNewPosts({
+    getNewestId,
+    getVisibleIds,
+    onNewPosts: handleIncoming,
+    onUpdated: handleUpdated,
+    enabled: !loading,
+  });
 
   const handleDeleted = useCallback((id: string) => {
     setPosts((prev) => prev.filter((post) => post.id !== id));

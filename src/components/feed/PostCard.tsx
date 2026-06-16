@@ -311,6 +311,23 @@ export default function PostCard({
     if (pickerTimer.current) clearTimeout(pickerTimer.current);
   }, []);
 
+  // Live updates: when the feed poll patches this post's reaction state (another
+  // user reacted, or this user reacted in another tab), sync it in — but never
+  // while the viewer has a reaction in flight here, so a poll can't stomp their
+  // own optimistic toggle mid-request. The server is authoritative once settled.
+  useEffect(() => {
+    if (reactPending) return;
+    setMyReaction(post.myReaction);
+    setLikeCount(post.likeCount);
+    setReactions(post.reactions);
+  }, [post.myReaction, post.likeCount, post.reactions, reactPending]);
+
+  // Comment count is authoritative from the server too, so another user's new
+  // comment bumps the count (and the "View N comments" affordance) live.
+  useEffect(() => {
+    setCommentCount(post.commentCount);
+  }, [post.commentCount]);
+
   // How many top-level comments aren't on screen yet.
   const unseenComments = commentsLoaded
     ? (commentsCursor ? commentCount - comments.length : 0)

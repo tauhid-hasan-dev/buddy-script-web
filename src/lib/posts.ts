@@ -104,16 +104,36 @@ export function getFeed(cursor?: string, limit = 20): Promise<FeedPage> {
   return api<FeedPage>(`/api/feed?${params.toString()}`);
 }
 
+// The mutable slice of a post — reaction tallies and comment count. The live
+// poll returns these for posts already on screen so likes/comments update with
+// the same latency as a new post, without re-sending unchanged content.
+export interface PostState {
+  id: string;
+  likeCount: number;
+  commentCount: number;
+  likedByMe: boolean;
+  myReaction: ReactionType | null;
+  reactions: ReactionCount[];
+}
+
 export interface FeedUpdates {
   posts: Post[];
+  updated: PostState[];
   hasMore: boolean;
 }
 
 // Live-update poll: posts newer than `after` (the newest post id the client
-// already shows). Hits an uncached endpoint so other users' posts appear within
-// a poll interval instead of waiting out the feed's first-page cache TTL.
-export function getFeedUpdates(after: string, limit = 10): Promise<FeedUpdates> {
+// already shows), plus refreshed like/comment state for the on-screen post
+// `ids`. Hits an uncached endpoint so other users' posts, reactions, and
+// comments appear within a poll interval instead of waiting out the feed's
+// first-page cache TTL.
+export function getFeedUpdates(
+  after: string,
+  ids: string[] = [],
+  limit = 10
+): Promise<FeedUpdates> {
   const params = new URLSearchParams({ after, limit: String(limit) });
+  if (ids.length > 0) params.set("ids", ids.join(","));
   return api<FeedUpdates>(`/api/feed/updates?${params.toString()}`);
 }
 
