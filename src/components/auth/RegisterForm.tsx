@@ -213,7 +213,7 @@ export default function RegisterForm() {
             >
               {pending ? (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                  <Spinner size={16} /> Creating account…
+                  <Spinner size={16} /> Registering…
                 </span>
               ) : (
                 "Register Now"
