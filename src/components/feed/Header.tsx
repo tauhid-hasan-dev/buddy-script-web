@@ -3,7 +3,8 @@
 import { Fragment, useEffect, useRef, useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 
-import { getMe, logout, type AuthUser } from "@/lib/auth";
+import { logout } from "@/lib/auth";
+import { useCurrentUser } from "@/lib/currentUser";
 import { fullName } from "@/lib/format";
 import Avatar from "@/components/Avatar";
 
@@ -51,24 +52,10 @@ export default function Header() {
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { user, clear } = useCurrentUser();
   const profileRef = useRef<HTMLDivElement>(null);
   const notifyRef = useRef<HTMLLIElement>(null);
   const displayName = user ? fullName(user) : "";
-
-  useEffect(() => {
-    let cancelled = false;
-    getMe()
-      .then((res) => {
-        if (!cancelled) setUser(res.user);
-      })
-      .catch(() => {
-        // Header just falls back to no name; the API guard handles real auth.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Close the profile/notification dropdowns when clicking outside them.
   useEffect(() => {
@@ -92,6 +79,7 @@ export default function Header() {
     setLoggingOut(true);
     try {
       await logout();
+      clear();
       router.replace("/login");
       router.refresh();
     } catch {

@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import "@/styles/bootstrap.min.css";
 import "@/styles/common.css";
 import "@/styles/main.css";
 import "@/styles/responsive.css";
 
+import { getServerFeed } from "@/lib/server-feed";
+import Spinner from "@/components/Spinner";
 import Feed from "@/components/feed/Feed";
 import FeedLayout from "@/components/feed/FeedLayout";
 import Header from "@/components/feed/Header";
@@ -17,6 +20,24 @@ import Stories from "@/components/feed/Stories";
 export const metadata: Metadata = {
   title: "Buddy Script",
 };
+
+function FeedFallback() {
+  return (
+    <div className="_feed_inner_timeline_post_area _b_radious6 _padd_b24 _padd_t24 _padd_r24 _padd_l24 _mar_b16">
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <Spinner />
+      </div>
+    </div>
+  );
+}
+
+// Awaiting the feed here (rather than in the page) keeps the await behind the
+// Suspense boundary, so the shell — header, sidebars, stories — paints
+// instantly while the spinner shows in the feed slot until posts stream in.
+async function FeedSection() {
+  const initialFeed = await getServerFeed();
+  return <Feed initialPage={initialFeed} />;
+}
 
 export default function FeedPage() {
   return (
@@ -53,7 +74,9 @@ export default function FeedPage() {
                 <div className="_layout_middle_wrap">
                   <div className="_layout_middle_inner">
                     <Stories />
-                    <Feed />
+                    <Suspense fallback={<FeedFallback />}>
+                      <FeedSection />
+                    </Suspense>
                   </div>
                 </div>
               </div>

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { ApiError } from "@/lib/api";
-import { getMe, type AuthUser } from "@/lib/auth";
+import { useCurrentUser } from "@/lib/currentUser";
 import { updateProfile, uploadAvatar, removeAvatar } from "@/lib/users";
 import { fullName } from "@/lib/format";
 import Avatar from "@/components/Avatar";
@@ -30,8 +30,7 @@ function CameraIcon() {
 }
 
 export default function ProfileView() {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, setUser } = useCurrentUser();
 
   const [editing, setEditing] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -42,26 +41,8 @@ export default function ProfileView() {
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    getMe()
-      .then((res) => {
-        if (cancelled) return;
-        setUser(res.user);
-        setFirstName(res.user.firstName);
-        setLastName(res.user.lastName);
-      })
-      .catch(() => {
-        // The proxy guard bounces real guests; a failure here is transient.
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // The name inputs are only shown while editing, and startEdit() seeds them
+  // from the current user, so there's nothing to sync on load.
 
   async function onPickFile(file: File | null) {
     setAvatarError(null);
