@@ -6,7 +6,7 @@ import type { NextConfig } from "next";
 // Defaults to the deployed API; set API_URL=http://localhost:5000 in
 // .env.local to develop against a local server.
 const API_URL =
-  process.env.API_URL ?? "https://buddy-script-server-bqsy.onrender.com";
+  process.env.API_URL ?? "https://buddy-script-server-iota.vercel.app";
 
 const nextConfig: NextConfig = {
   async rewrites() {

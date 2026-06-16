@@ -13,7 +13,7 @@ npm run lint     # eslint
 ```
 
 By default the app talks to the **deployed** API
-(`https://buddy-script-server-bqsy.onrender.com`). To develop against a local
+(`https://buddy-script-server-iota.vercel.app`). To develop against a local
 server, create `.env.local`:
 
 ```bash
