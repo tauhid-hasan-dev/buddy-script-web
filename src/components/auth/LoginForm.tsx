@@ -8,6 +8,7 @@ import "@/styles/auth-forms.css";
 import { ApiError } from "@/lib/api";
 import { login } from "@/lib/auth";
 import { validateEmail } from "@/lib/validation";
+import Spinner from "@/components/Spinner";
 
 interface FormErrors {
   email?: string;
@@ -166,7 +167,13 @@ export default function LoginForm() {
               disabled={pending}
               aria-busy={pending}
             >
-              {pending ? "Logging in…" : "Login now"}
+              {pending ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <Spinner size={16} /> Logging in…
+                </span>
+              ) : (
+                "Login now"
+              )}
             </button>
           </div>
         </div>

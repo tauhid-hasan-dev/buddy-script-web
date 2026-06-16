@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import "@/styles/auth-forms.css";
 
 import { ApiError } from "@/lib/api";
+import Spinner from "@/components/Spinner";
 import { register } from "@/lib/auth";
 import {
   validateEmail,
@@ -210,7 +211,13 @@ export default function RegisterForm() {
               disabled={pending}
               aria-busy={pending}
             >
-              {pending ? "Creating account…" : "Register Now"}
+              {pending ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <Spinner size={16} /> Creating account…
+                </span>
+              ) : (
+                "Register Now"
+              )}
             </button>
           </div>
         </div>

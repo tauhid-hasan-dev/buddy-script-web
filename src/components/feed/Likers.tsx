@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { fullName } from "@/lib/format";
 import { REACTION_BY_TYPE, type PostAuthor, type ReactionType } from "@/lib/posts";
+import Spinner from "@/components/Spinner";
 
 // The minimal page shape Likers needs. Post likers carry a reaction `type`;
 // comment likers (binary likes) don't, so it's optional.
@@ -101,7 +102,11 @@ export default function Likers({
             textAlign: "left",
           }}
         >
-          {loading && <span style={{ fontSize: 13 }}>Loading…</span>}
+          {loading && (
+            <span style={{ display: "inline-flex", padding: "2px 0" }}>
+              <Spinner size={18} color="#377dff" />
+            </span>
+          )}
           {error && (
             <span style={{ fontSize: 13, color: "#d00" }}>
               Couldn&apos;t load likes.

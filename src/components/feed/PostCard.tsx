@@ -25,6 +25,7 @@ import {
 } from "@/lib/comments";
 import type { AuthUser } from "@/lib/auth";
 import Avatar from "@/components/Avatar";
+import Spinner from "@/components/Spinner";
 import CommentNode from "./CommentNode";
 import Likers from "./Likers";
 
@@ -104,7 +105,7 @@ function NewCommentForm({
             aria-label="Send comment"
           >
             {pending ? (
-              <span className="_comment_spinner" role="status" aria-label="Sending" />
+              <Spinner size={16} color="#377DFF" />
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#377DFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13" />
@@ -420,7 +421,13 @@ export default function PostCard({
                             <path stroke="#1890FF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.2" d="M2.25 4.5h13.5M6 4.5V3a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0112 3v1.5m2.25 0V15a1.5 1.5 0 01-1.5 1.5h-7.5a1.5 1.5 0 01-1.5-1.5V4.5h10.5zM7.5 8.25v4.5M10.5 8.25v4.5"/>
                           </svg>
                         </span>
-                        {deleting ? "Deleting…" : "Delete Post"}
+                        {deleting ? (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            <Spinner size={14} /> Deleting…
+                          </span>
+                        ) : (
+                          "Delete Post"
+                        )}
                       </a>
                     </li>
                   </>
@@ -460,7 +467,13 @@ export default function PostCard({
                 aria-busy={savingEdit}
                 style={{ padding: "6px 18px", borderRadius: 6, border: "none", background: "#377DFF", color: "#fff", cursor: "pointer" }}
               >
-                {savingEdit ? "Saving…" : "Save"}
+                {savingEdit ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <Spinner size={14} /> Saving…
+                  </span>
+                ) : (
+                  "Save"
+                )}
               </button>
               <button
                 type="button"
@@ -654,11 +667,15 @@ export default function PostCard({
               onClick={loadComments}
               disabled={loadingComments}
             >
-              {loadingComments
-                ? "Loading…"
-                : commentsLoaded
-                  ? `View ${unseenComments} more ${unseenComments === 1 ? "comment" : "comments"}`
-                  : `View ${unseenComments} ${unseenComments === 1 ? "comment" : "comments"}`}
+              {loadingComments ? (
+                <span style={{ display: "inline-flex", alignItems: "center" }}>
+                  <Spinner size={16} />
+                </span>
+              ) : commentsLoaded ? (
+                `View ${unseenComments} more ${unseenComments === 1 ? "comment" : "comments"}`
+              ) : (
+                `View ${unseenComments} ${unseenComments === 1 ? "comment" : "comments"}`
+              )}
             </button>
           </div>
         )}

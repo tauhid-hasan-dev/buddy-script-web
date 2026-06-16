@@ -7,6 +7,7 @@ import { useCurrentUser } from "@/lib/currentUser";
 import { updateProfile, uploadAvatar, removeAvatar } from "@/lib/users";
 import { fullName } from "@/lib/format";
 import Avatar from "@/components/Avatar";
+import Spinner from "@/components/Spinner";
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -159,7 +160,11 @@ export default function ProfileView() {
         <div className="_uprofile_head">
           <div className="_uprofile_avatar_wrap">
             <Avatar src={user.avatarUrl} name={fullName(user)} className="_uprofile_avatar" size={90} />
-            {avatarBusy && <span className="_uprofile_avatar_busy">…</span>}
+            {avatarBusy && (
+              <span className="_uprofile_avatar_busy">
+                <Spinner size={24} />
+              </span>
+            )}
             <button
               type="button"
               className="_uprofile_cam_btn"

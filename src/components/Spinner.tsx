@@ -1,7 +1,15 @@
 // Self-contained loading spinner. The rotation is driven by SVG SMIL
 // (<animateTransform>), so it needs no global CSS and works in both server
-// and client components. Brand blue matches the app's primary accent.
-export default function Spinner({ size = 36 }: { size?: number }) {
+// and client components. Defaults to `currentColor` so it inherits the
+// surrounding text colour — visible on white areas, coloured buttons and dark
+// overlays alike; pass `color` to force a specific shade (e.g. brand blue).
+export default function Spinner({
+  size = 36,
+  color = "currentColor",
+}: {
+  size?: number;
+  color?: string;
+}) {
   return (
     <svg
       width={size}
@@ -16,7 +24,7 @@ export default function Spinner({ size = 36 }: { size?: number }) {
         cy="25"
         r="20"
         fill="none"
-        stroke="#377dff"
+        stroke={color}
         strokeWidth="5"
         strokeLinecap="round"
         strokeDasharray="90 60"

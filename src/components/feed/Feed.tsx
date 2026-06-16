@@ -71,7 +71,7 @@ export default function Feed({ initialPage }: { initialPage: FeedPage | null }) 
       {loading && (
         <div className="_feed_inner_timeline_post_area _b_radious6 _padd_b24 _padd_t24 _padd_r24 _padd_l24 _mar_b16">
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <Spinner />
+            <Spinner color="#377dff" />
           </div>
         </div>
       )}
@@ -107,7 +107,13 @@ export default function Feed({ initialPage }: { initialPage: FeedPage | null }) 
             onClick={loadMore}
             disabled={loadingMore}
           >
-            {loadingMore ? "Loading…" : "Load more posts"}
+            {loadingMore ? (
+              <span style={{ display: "inline-flex", alignItems: "center" }}>
+                <Spinner size={18} />
+              </span>
+            ) : (
+              "Load more posts"
+            )}
           </button>
         </div>
       )}

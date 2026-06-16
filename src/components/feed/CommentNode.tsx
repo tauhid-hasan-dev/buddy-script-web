@@ -13,6 +13,7 @@ import {
 } from "@/lib/comments";
 import type { AuthUser } from "@/lib/auth";
 import Avatar from "@/components/Avatar";
+import Spinner from "@/components/Spinner";
 import Likers from "./Likers";
 
 function CommentReplyForm({
@@ -93,7 +94,7 @@ function CommentReplyForm({
             aria-label="Send comment"
           >
             {pending ? (
-              <span className="_comment_spinner" role="status" aria-label="Sending" />
+              <Spinner size={16} color="#377DFF" />
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#377DFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13" />
@@ -252,11 +253,15 @@ export default function CommentNode({
                 onClick={loadReplies}
                 disabled={loadingReplies}
               >
-                {loadingReplies
-                  ? "Loading…"
-                  : repliesLoaded
-                    ? `View ${hiddenReplies} more ${hiddenReplies === 1 ? "reply" : "replies"}`
-                    : `View ${replyCount} ${replyCount === 1 ? "reply" : "replies"}`}
+                {loadingReplies ? (
+                  <span style={{ display: "inline-flex", alignItems: "center" }}>
+                    <Spinner size={16} />
+                  </span>
+                ) : repliesLoaded ? (
+                  `View ${hiddenReplies} more ${hiddenReplies === 1 ? "reply" : "replies"}`
+                ) : (
+                  `View ${replyCount} ${replyCount === 1 ? "reply" : "replies"}`
+                )}
               </button>
             ) : null}
           </div>

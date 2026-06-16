@@ -7,6 +7,7 @@ import { logout } from "@/lib/auth";
 import { useCurrentUser } from "@/lib/currentUser";
 import { fullName } from "@/lib/format";
 import Avatar from "@/components/Avatar";
+import Spinner from "@/components/Spinner";
 
 function PostNotification() {
   return (
@@ -285,7 +286,13 @@ export default function Header() {
                           <path stroke="#377DFF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6.667 18H2.889A1.889 1.889 0 011 16.111V2.89A1.889 1.889 0 012.889 1h3.778M13.277 14.222L18 9.5l-4.723-4.722M18 9.5H6.667"/>
                         </svg>
                       </span>
-                      {loggingOut ? "Logging Out…" : "Log Out"}
+                      {loggingOut ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <Spinner size={14} /> Logging Out…
+                        </span>
+                      ) : (
+                        "Log Out"
+                      )}
                     </div>
                     <button type="submit" className="_nav_drop_btn_link">
                       <svg xmlns="http://www.w3.org/2000/svg" width="6" height="10" fill="none" viewBox="0 0 6 10">
